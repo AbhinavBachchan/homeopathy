@@ -1,0 +1,50 @@
+# ==============================
+# Environment / secrets
+# ==============================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==============================
+# Go (backend)
+# ==============================
+backend/server
+backend/tmp/
+backend/*.exe
+backend/*.test
+backend/*.out
+backend/vendor/
+
+# ==============================
+# Node / Angular (frontend)
+# ==============================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/out-tsc/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.env
+
+# ==============================
+# Docker
+# ==============================
+*.pid
+
+# ==============================
+# Editor / OS
+# ==============================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Logs
+# ==============================
+*.log
+logs/
