@@ -1,36 +1,44 @@
+import { CommonModule } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import { HttpErrorResponse } from "@angular/common/http";
-import { CommonModule } from "@angular/common";
-import { ReactiveFormsModule, FormBuilder, Validators } from "@angular/forms";
+import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { AuthService } from "../../core/services/auth.service";
 import { TitleCasePipe } from "@angular/common";
 
 @Component({
-  selector: "app-login",
+  selector: "app-register",
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TitleCasePipe],
-  templateUrl: "./login.component.html",
-  styleUrl: "./login.component.css",
+  templateUrl: "./register.component.html",
+  styleUrl: "./register.component.css",
 })
-export class LoginComponent {
+export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+
   submitting = signal(false);
   error = signal<string | null>(null);
+
   form = this.fb.group({
+    name: ["", [Validators.required]],
     email: ["", [Validators.required, Validators.email]],
-    password: ["", [Validators.required]],
+    phone: [""],
+    password: ["", [Validators.required, Validators.minLength(6)]],
   });
 
   onSubmit(): void {
     if (this.form.invalid) return;
+
     this.submitting.set(true);
     this.error.set(null);
+
     this.authService
-      .login({
+      .register({
+        name: this.form.value.name!,
         email: this.form.value.email!,
+        phone: this.form.value.phone || undefined,
         password: this.form.value.password!,
       })
       .subscribe({
@@ -40,7 +48,7 @@ export class LoginComponent {
         },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);
-          this.error.set(this.getApiErrorMessage(err) ?? "Invalid email or password");
+          this.error.set(this.getApiErrorMessage(err) ?? "Could not create account");
         },
       });
   }

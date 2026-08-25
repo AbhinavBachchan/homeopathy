@@ -1,0 +1,22 @@
+<section class="auth-page">
+  <form class="auth-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h2>Login</h2>
+    <p class="intro">
+      Welcome back. Sign in to continue exploring remedies, placing orders, and
+      keeping your homeopathy shopping in one place.
+    </p>
+    <label>
+      Email
+      <input type="email" formControlName="email" />
+    </label>
+    <label>
+      Password
+      <input type="password" formControlName="password" />
+    </label>
+    <button type="submit" [disabled]="form.invalid || submitting()">
+      Log in
+    </button>
+    <button type="button" class="forgot-link">Forgot Password?</button>
+    <p class="error" *ngIf="error()">{{ error() | titlecase }}</p>
+  </form>
+</section>

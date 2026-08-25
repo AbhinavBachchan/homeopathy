@@ -1,0 +1,30 @@
+<section class="auth-page">
+  <form class="auth-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h2>Create account</h2>
+    <p class="intro">
+      Join the store to save your details, place orders faster, and come back to
+      your remedies anytime from the same browser session.
+    </p>
+    <label>
+      Name
+      <input type="text" formControlName="name" />
+    </label>
+    <label>
+      Email
+      <input type="email" formControlName="email" />
+    </label>
+    <label>
+      Phone
+      <input type="tel" formControlName="phone" />
+    </label>
+    <label>
+      Password
+      <input type="password" formControlName="password" />
+    </label>
+    <button type="submit" [disabled]="form.invalid || submitting()">
+      Create account
+    </button>
+    <a routerLink="/login" class="text-link">Already have an account? Login</a>
+    <p class="error" *ngIf="error()">{{ error() | titlecase }}</p>
+  </form>
+</section>

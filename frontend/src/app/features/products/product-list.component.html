@@ -1,0 +1,20 @@
+<div class="filters">
+  <input
+    type="text"
+    placeholder="Search by remedy, symptom, brand..."
+    (input)="onSearch($event)"
+  />
+</div>
+<div class="grid" *ngIf="!loading(); else loadingTpl">
+  <a
+    class="card"
+    *ngFor="let p of products()"
+    [routerLink]="['/products', p.slug]"
+  >
+    <h3>{{ p.name }}</h3>
+    <p>{{ p.potency }} &middot; {{ p.form }} &middot; {{ p.manufacturer }}</p>
+    <p class="price">₹{{ p.price / 100 | number: "1.2-2" }}</p>
+    <span class="badge" *ngIf="p.schedule === 'H'">Prescription required</span>
+  </a>
+</div>
+<ng-template #loadingTpl>Loading products...</ng-template>

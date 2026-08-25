@@ -1,22 +1,16 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from "@angular/core";
+import { NgIf } from "@angular/common";
+import { NavigationEnd, Router, RouterOutlet } from "@angular/router";
+import { filter } from "rxjs";
+import { HeaderComponent } from "./shared/header/header.component";
+import { FooterComponent } from "./shared/footer/footer.component";
 
 @Component({
-  selector: 'app-root',
+  selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
-  template: `
-    <header>
-      <a routerLink="/">Homeopathy Store</a>
-      <nav>
-        <a routerLink="/products">Shop</a>
-        <a routerLink="/login">Login</a>
-        <a routerLink="/cart">Cart</a>
-      </nav>
-    </header>
-    <main>
-      <router-outlet></router-outlet>
-    </main>
-  `
+  imports: [RouterOutlet, NgIf, HeaderComponent, FooterComponent],
+  templateUrl: "./app.component.html",
+  styleUrl: "./app.component.css",
 })
-export class AppComponent {}
+export class AppComponent {
+}

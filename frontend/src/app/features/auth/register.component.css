@@ -1,0 +1,68 @@
+:host {
+  display: block;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.auth-card {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 460px);
+  margin: 0;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(16, 132, 126, 0.08);
+}
+
+.auth-card h2 {
+  margin: 0;
+}
+
+.intro {
+  margin: -0.25rem 0 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+input,
+button {
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+}
+
+button {
+  background: #10847e;
+  color: #fff;
+  border-color: #10847e;
+  font-weight: 600;
+}
+
+.text-link {
+  color: #10847e;
+  text-decoration: none;
+}
+
+.back-home {
+  color: #10847e;
+  text-decoration: none;
+  font-weight: 600;
+  justify-self: start;
+}
+
+.error {
+  color: #b91c1c;
+  margin: 0;
+}

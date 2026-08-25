@@ -1,0 +1,29 @@
+.filters {
+  padding: 2rem 2rem 0;
+}
+.filters input {
+  box-sizing: border-box;
+  max-width: 420px;
+  padding: 0.65rem 0.75rem;
+  width: 100%;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 2rem;
+}
+.card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  color: inherit;
+  padding: 1rem;
+  text-decoration: none;
+}
+.badge {
+  background: #fee2e2;
+  border-radius: 999px;
+  color: #991b1b;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}

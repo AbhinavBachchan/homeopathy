@@ -1,33 +1,4 @@
-/* Global styles. Swap in Tailwind here if you want the same utility-first
-   workflow the brief specified for the Next.js version — Angular supports
-   Tailwind via @angular-builders/tailwind or the native PostCSS config. */
 body {
   font-family: system-ui, sans-serif;
   margin: 0;
-}
-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #eee;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-  padding: 2rem;
-}
-.card {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 1rem;
-  text-decoration: none;
-  color: inherit;
-}
-.badge {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
 }

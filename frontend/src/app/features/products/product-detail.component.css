@@ -1,0 +1,15 @@
+.product-detail {
+  max-width: 720px;
+  padding: 2rem;
+}
+.price {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.rx-notice {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 4px;
+  margin: 1rem 0;
+  padding: 0.75rem;
+}

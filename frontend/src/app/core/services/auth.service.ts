@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, User } from '../models/user.model';
 
 const TOKEN_KEY = 'hp_token';
+const USER_KEY = 'hp_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,7 +13,7 @@ export class AuthService {
   private baseUrl = `${environment.apiUrl}/auth`;
 
   // Signal-based current-user state, readable from any standalone component.
-  currentUser = signal<User | null>(null);
+  currentUser = signal<User | null>(this.getStoredUser());
 
   register(payload: { email: string; password: string; name: string; phone?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, payload).pipe(
@@ -27,12 +28,24 @@ export class AuthService {
   }
 
   logout(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     this.currentUser.set(null);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    const sessionToken = sessionStorage.getItem(TOKEN_KEY);
+    if (sessionToken) return sessionToken;
+
+    const legacyToken = localStorage.getItem(TOKEN_KEY);
+    if (legacyToken) {
+      sessionStorage.setItem(TOKEN_KEY, legacyToken);
+      localStorage.removeItem(TOKEN_KEY);
+    }
+
+    return legacyToken;
   }
 
   isLoggedIn(): boolean {
@@ -40,8 +53,21 @@ export class AuthService {
   }
 
   private persistSession(res: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY, res.data.token);
+    sessionStorage.setItem(TOKEN_KEY, res.data.token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
     this.currentUser.set(res.data.user);
+  }
+
+  private getStoredUser(): User | null {
+    const storedUser = sessionStorage.getItem(USER_KEY);
+    if (!storedUser) return null;
+
+    try {
+      return JSON.parse(storedUser) as User;
+    } catch {
+      sessionStorage.removeItem(USER_KEY);
+      return null;
+    }
   }
 
   // TODO: loginWithOtp() hitting MSG91-backed /auth/otp/* endpoints, and

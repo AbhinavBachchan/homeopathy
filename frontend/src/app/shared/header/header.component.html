@@ -1,0 +1,14 @@
+<header class="topbar">
+  <a routerLink="/" class="logo">Trusted homeopathy care</a>
+  <div class="actions">
+    <ng-container *ngIf="auth.currentUser(); else guestActions">
+      <p class="user-name">{{ auth.currentUser()?.name | titlecase }}</p>
+      <button type="button" class="logout-btn" (click)="logout()">Logout</button>
+    </ng-container>
+    <ng-template #guestActions>
+      <a routerLink="/login">Login</a>
+      <a routerLink="/register">Register</a>
+    </ng-template>
+
+  </div>
+</header>

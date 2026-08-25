@@ -1,0 +1,51 @@
+.hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #10847e;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  line-height: 1.05;
+}
+
+.copy {
+  margin: 1rem 0 0;
+  max-width: 56ch;
+  color: #4b5563;
+  font-size: 1.05rem;
+}
+
+.cta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+}
+
+.cta a {
+  padding: 0.8rem 1.2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.primary {
+  background: #10847e;
+  color: #fff;
+}
+
+.secondary {
+  border: 1px solid #10847e;
+  color: #10847e;
+}
