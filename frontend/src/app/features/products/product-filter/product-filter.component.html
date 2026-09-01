@@ -1,0 +1,83 @@
+<div class="filter-sidebar">
+  <!-- Filter Header -->
+  <div class="filter-header">
+    <div class="filter-title-group">
+      <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </svg>
+      <h3 class="filter-title">Filters</h3>
+      <span *ngIf="getTotalActiveFiltersCount() > 0" class="active-badge">
+        {{ getTotalActiveFiltersCount() }}
+      </span>
+    </div>
+
+    <button
+      *ngIf="getTotalActiveFiltersCount() > 0"
+      type="button"
+      class="clear-all-btn"
+      (click)="clearAllFilters()"
+    >
+      Clear all
+    </button>
+  </div>
+
+  <!-- Active Filter Badges / Chips -->
+  <div class="active-chips-container" *ngIf="getActiveFilterTags().length > 0">
+    <div class="chips-label">Active:</div>
+    <div class="chips-list">
+      <span class="filter-chip" *ngFor="let tag of getActiveFilterTags()">
+        <span class="chip-val">{{ tag.label }}</span>
+        <button
+          type="button"
+          class="chip-remove"
+          (click)="removeFilter(tag.categoryId, tag.value)"
+          aria-label="Remove filter"
+        >
+          &times;
+        </button>
+      </span>
+    </div>
+  </div>
+
+  <!-- Filter Sections Stacked Vertically One Below The Other -->
+  <div class="filter-categories-container">
+    <div
+      class="filter-category-section"
+      *ngFor="let category of categories(); let isLast = last"
+      [class.has-divider]="!isLast"
+    >
+      <!-- Section Header -->
+      <div class="category-header">
+        <h4 class="category-title">{{ category.name }}</h4>
+        <button
+          *ngIf="getSelectedCountForCategory(category.id) > 0"
+          type="button"
+          class="category-reset-btn"
+          (click)="clearCategoryFilters(category.id)"
+        >
+          Reset
+        </button>
+      </div>
+
+      <!-- Checkboxes List -->
+      <div class="checkbox-list">
+        <label
+          class="checkbox-item"
+          *ngFor="let option of category.options"
+          [class.selected]="isOptionSelected(category.id, option.value)"
+        >
+          <div class="checkbox-left">
+            <input
+              type="checkbox"
+              [value]="option.value"
+              [checked]="isOptionSelected(category.id, option.value)"
+              (change)="toggleOption(category.id, option.value, $event)"
+            />
+            <span class="checkbox-label">{{ option.label }}</span>
+          </div>
+          <span class="item-count" *ngIf="option.count !== undefined">({{ option.count }})</span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>

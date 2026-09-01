@@ -70,6 +70,20 @@ export class AuthService {
     }
   }
 
+  forgotPassword(payload: { email: string }): Observable<{ success: boolean; data: { message: string } }> {
+    return this.http.post<{ success: boolean; data: { message: string } }>(
+      `${this.baseUrl}/forgot-password`,
+      payload
+    );
+  }
+
+  resetPassword(payload: { email: string; token: string; password: string }): Observable<{ success: boolean; data: { message: string } }> {
+    return this.http.post<{ success: boolean; data: { message: string } }>(
+      `${this.baseUrl}/reset-password`,
+      payload
+    );
+  }
+
   // TODO: loginWithOtp() hitting MSG91-backed /auth/otp/* endpoints, and
   // Google OAuth redirect flow, once those backend handlers exist.
 }

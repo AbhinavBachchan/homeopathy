@@ -1,6 +1,25 @@
 <section class="hero">
   <p class="eyebrow">Trusted homeopathy care</p>
   <h1>Simple medicine shopping for your family</h1>
+  <div class="slideshow">
+    <div class="slides-wrapper">
+      <img
+        *ngFor="let img of images; let i = index"
+        [src]="img"
+        [alt]="'Slide ' + (i + 1)"
+        class="slide"
+        [class.active]="i === currentIndex"
+      />
+    </div>
+    <div class="dots">
+      <span
+        *ngFor="let img of images; let i = index"
+        class="dot"
+        [class.active]="i === currentIndex"
+        (click)="goTo(i)"
+      ></span>
+    </div>
+  </div>
   <p class="copy">
     Find homeopathy products, view details, and sign in or create an account
     when you are ready.

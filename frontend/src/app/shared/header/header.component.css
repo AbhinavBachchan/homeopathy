@@ -55,3 +55,50 @@
   white-space: nowrap;
   font-weight: 600;
 }
+
+.nav-icon-btn,
+.cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem !important;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  transition: background-color 0.2s;
+  line-height: 0;
+}
+
+.nav-icon-btn:hover,
+.cart-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-icon,
+.cart-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.icon-badge,
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #e11d48;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 2px solid #10847e;
+  line-height: 1;
+}

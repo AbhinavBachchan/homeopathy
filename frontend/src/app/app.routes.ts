@@ -32,7 +32,31 @@ export const routes: Routes = [
         (m) => m.RegisterComponent,
       ),
   },
-  // TODO: /cart, /checkout, /account/orders, /consultations (Phase 2),
+  {
+    path: "forgot-password",
+    loadComponent: () =>
+      import("./features/auth/forgot-password.component").then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+  },
+  {
+    path: "reset-password",
+    loadComponent: () =>
+      import("./features/auth/forgot-password.component").then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+  },
+  {
+    path: "cart",
+    loadComponent: () =>
+      import("./features/cart/cart.component").then((m) => m.CartComponent),
+  },
+  {
+    path: "favorites",
+    loadComponent: () =>
+      import("./features/favorites/favorites.component").then((m) => m.FavoritesComponent),
+  },
+  // TODO: /checkout, /account/orders, /consultations (Phase 2),
   // /doctor/dashboard, /admin (guarded by role via a functional CanActivate
   // guard reading AuthService.currentUser()).
 ];

@@ -1,11 +1,18 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"math/big"
+	"strings"
 	"time"
 
 	"homeopathy-platform/internal/config"
 	"homeopathy-platform/internal/middleware"
 	"homeopathy-platform/internal/models"
+	"homeopathy-platform/pkg/mailer"
 	"homeopathy-platform/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -15,12 +22,17 @@ import (
 )
 
 type AuthHandler struct {
-	db  *gorm.DB
-	cfg *config.Config
+	db     *gorm.DB
+	cfg    *config.Config
+	mailer *mailer.Mailer
 }
 
 func NewAuthHandler(db *gorm.DB, cfg *config.Config) *AuthHandler {
-	return &AuthHandler{db: db, cfg: cfg}
+	return &AuthHandler{
+		db:     db,
+		cfg:    cfg,
+		mailer: mailer.NewMailer(cfg.BrevoAPIKey, cfg.BrevoSenderEmail, cfg.BrevoSenderName),
+	}
 }
 
 type registerRequest struct {
@@ -110,6 +122,112 @@ func (h *AuthHandler) issueToken(user models.User) (string, error) {
 	return token.SignedString([]byte(h.cfg.JWTSecret))
 }
 
-// TODO Phase 1 P0 remaining: mobile OTP login via MSG91, Google OAuth callback.
-// These slot in as additional handlers (LoginWithOTP, GoogleCallback) using the
-// same issueToken() helper so they return the same JWT shape.
+type forgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req forgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
+	}
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+
+	var user models.User
+	if err := h.db.Where("LOWER(email) = ?", email).First(&user).Error; err != nil {
+		response.Error(c, 404, "Email is not registered")
+		return
+	}
+
+	rawToken, err := generateResetCode()
+	if err != nil {
+		response.Error(c, 500, "could not process password reset request")
+		return
+	}
+
+	hashedToken := hashResetToken(rawToken)
+	expiresAt := time.Now().Add(15 * time.Minute)
+
+	if err := h.db.Model(&user).Updates(map[string]interface{}{
+		"reset_token":            hashedToken,
+		"reset_token_expires_at": expiresAt,
+	}).Error; err != nil {
+		response.Error(c, 500, "could not process password reset request")
+		return
+	}
+
+	// Dispatch email with plaintext reset code via Brevo mailer (or local log if unconfigured)
+	go func(recipientEmail, recipientName, code string) {
+		_ = h.mailer.SendPasswordResetEmail(recipientEmail, recipientName, code)
+	}(user.Email, user.Name, rawToken)
+
+	// Note: Plaintext reset token is NEVER exposed in the API response.
+	response.OK(c, gin.H{
+		"message": "A 6 digit verification code has been sent to the registered email. Kindly enter the code.",
+	})
+}
+
+type resetPasswordRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"password" binding:"required,min=8"`
+}
+
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req resetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
+	}
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	token := strings.TrimSpace(req.Token)
+	hashedToken := hashResetToken(token)
+
+	var user models.User
+	if err := h.db.Where("LOWER(email) = ? AND reset_token = ?", email, hashedToken).First(&user).Error; err != nil {
+		response.Error(c, 400, "invalid or expired reset code")
+		return
+	}
+
+	if user.ResetTokenExpiresAt == nil || time.Now().After(*user.ResetTokenExpiresAt) {
+		response.Error(c, 400, "reset code has expired, please request a new one")
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		response.Error(c, 500, "could not process password")
+		return
+	}
+
+	// Update user password and clear reset token fields
+	if err := h.db.Model(&user).Updates(map[string]interface{}{
+		"password_hash":          string(hash),
+		"reset_token":            "",
+		"reset_token_expires_at": nil,
+	}).Error; err != nil {
+		response.Error(c, 500, "could not update password")
+		return
+	}
+
+	response.OK(c, gin.H{
+		"message": "Password has been successfully reset. You can now login with your new password.",
+	})
+}
+
+func generateResetCode() (string, error) {
+	n, err := rand.Int(rand.Reader, big.NewInt(900000))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%06d", n.Int64()+100000), nil
+}
+
+func hashResetToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
+}
+

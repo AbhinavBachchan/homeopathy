@@ -16,7 +16,7 @@
     <button type="submit" [disabled]="form.invalid || submitting()">
       Log in
     </button>
-    <button type="button" class="forgot-link">Forgot Password?</button>
+    <a routerLink="/forgot-password" class="forgot-link">Forgot Password?</a>
     <p class="error" *ngIf="error()">{{ error() | titlecase }}</p>
   </form>
 </section>

@@ -26,7 +26,9 @@ type Config struct {
 
 	InteraktAPIKey string // WhatsApp
 
-	BrevoAPIKey string // Transactional + marketing email
+	BrevoAPIKey      string // Transactional + marketing email
+	BrevoSenderEmail string // Verified sender email in Brevo
+	BrevoSenderName  string // Sender display name
 
 	MSG91AuthKey     string // OTP
 	MSG91TemplateID  string
@@ -63,7 +65,9 @@ func Load() *Config {
 
 		InteraktAPIKey: getEnv("INTERAKT_API_KEY", ""),
 
-		BrevoAPIKey: getEnv("BREVO_API_KEY", ""),
+		BrevoAPIKey:      getEnv("BREVO_API_KEY", ""),
+		BrevoSenderEmail: getEnv("BREVO_SENDER_EMAIL", ""),
+		BrevoSenderName:  getEnv("BREVO_SENDER_NAME", "Homeopathy Platform"),
 
 		MSG91AuthKey:    getEnv("MSG91_AUTH_KEY", ""),
 		MSG91TemplateID: getEnv("MSG91_TEMPLATE_ID", ""),

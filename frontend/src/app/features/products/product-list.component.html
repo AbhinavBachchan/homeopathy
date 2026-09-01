@@ -1,20 +1,113 @@
-<div class="filters">
-  <input
-    type="text"
-    placeholder="Search by remedy, symptom, brand..."
-    (input)="onSearch($event)"
-  />
+<div class="products-page-layout">
+  <!-- Side Filter Sidebar Component -->
+  <aside class="sidebar">
+    <app-product-filter (filterChange)="onFilterChange($event)"></app-product-filter>
+  </aside>
+
+  <!-- Products Main Content -->
+  <main class="main-content">
+    <!-- Top Bar with Search & Results Count -->
+    <div class="top-bar">
+      <div class="search-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search by remedy name (e.g. 'abc'), potency, brand..."
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+        />
+      </div>
+
+      <div class="products-count-badge" *ngIf="!loading()">
+        <span>{{ displayedProducts().length }}</span> products found
+      </div>
+    </div>
+
+    <!-- Products Grid & States -->
+    <div class="products-grid-container" *ngIf="!loading(); else loadingTpl">
+      <div class="grid" *ngIf="displayedProducts().length > 0; else noProductsTpl">
+        <div
+          class="card"
+          *ngFor="let p of paginatedProducts()"
+        >
+          <!-- Card Header: Badges & Separate Favorite Button Component -->
+          <div class="card-header">
+            <div class="header-tags">
+              <span class="category-tag" *ngIf="p.therapeutic_category">{{ p.therapeutic_category }}</span>
+              <span class="badge" *ngIf="p.schedule === 'H'">Rx Req.</span>
+            </div>
+
+            <!-- Separate Add to Favorites Heart Button Component -->
+            <app-favorite-button
+              [productId]="p.id"
+              [isFavorite]="isFavorite(p.id)"
+              (favoriteChange)="onFavoriteChange($event)"
+            ></app-favorite-button>
+          </div>
+
+          <!-- Product Details Link -->
+          <a class="card-body" [routerLink]="['/products', p.slug]">
+            <h3 class="product-title">{{ p.name }}</h3>
+            <div class="product-meta">
+              <span *ngIf="p.potency" class="meta-item">{{ p.potency }}</span>
+              <span *ngIf="p.form" class="meta-dot">&middot;</span>
+              <span *ngIf="p.form" class="meta-item">{{ p.form }}</span>
+              <span *ngIf="p.manufacturer" class="meta-dot">&middot;</span>
+              <span *ngIf="p.manufacturer" class="meta-item">{{ p.manufacturer }}</span>
+            </div>
+            <p class="price">₹{{ p.price / 100 | number: "1.2-2" }}</p>
+          </a>
+
+          <!-- Card Actions: Add to Cart Button (requires login) -->
+          <div class="card-footer">
+            <button
+              type="button"
+              class="add-to-cart-btn"
+              [class.added]="isAddedToCart(p.id)"
+              (click)="addToCart(p, $event)"
+            >
+              <svg *ngIf="!isAddedToCart(p.id)" class="cart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <svg *ngIf="isAddedToCart(p.id)" class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{{ isAddedToCart(p.id) ? 'Added to Cart' : 'Add to Cart' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Separate Pagination Component (Rendered when results cnt > 0, Max 9 items/page) -->
+      <app-pagination
+        *ngIf="displayedProducts().length > 0"
+        [totalItems]="displayedProducts().length"
+        [pageSize]="pageSize()"
+        [currentPage]="currentPage()"
+        (pageChange)="onPageChange($event)"
+      ></app-pagination>
+
+      <!-- Empty State -->
+      <ng-template #noProductsTpl>
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h3>No products match your criteria</h3>
+          <p>Try searching for "abc" or adjusting your filter checkboxes to find homeopathic remedies.</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Loading State -->
+    <ng-template #loadingTpl>
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading homeopathic medicines...</p>
+      </div>
+    </ng-template>
+  </main>
 </div>
-<div class="grid" *ngIf="!loading(); else loadingTpl">
-  <a
-    class="card"
-    *ngFor="let p of products()"
-    [routerLink]="['/products', p.slug]"
-  >
-    <h3>{{ p.name }}</h3>
-    <p>{{ p.potency }} &middot; {{ p.form }} &middot; {{ p.manufacturer }}</p>
-    <p class="price">₹{{ p.price / 100 | number: "1.2-2" }}</p>
-    <span class="badge" *ngIf="p.schedule === 'H'">Prescription required</span>
-  </a>
-</div>
-<ng-template #loadingTpl>Loading products...</ng-template>

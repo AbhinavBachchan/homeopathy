@@ -36,6 +36,8 @@ func New(cfg *config.Config, db *gorm.DB) *gin.Engine {
 		// Auth
 		api.POST("/auth/register", authHandler.Register)
 		api.POST("/auth/login", authHandler.Login)
+		api.POST("/auth/forgot-password", authHandler.ForgotPassword)
+		api.POST("/auth/reset-password", authHandler.ResetPassword)
 
 		// Products (public read)
 		api.GET("/products", productHandler.List)

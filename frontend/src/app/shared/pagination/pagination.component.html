@@ -1,0 +1,39 @@
+<div class="pagination-container" *ngIf="totalItems > 0">
+  <div class="pagination-summary">
+    Showing <span>{{ startItemIndex }}</span> &ndash; <span>{{ endItemIndex }}</span> of <span>{{ totalItems }}</span> products
+  </div>
+
+  <div class="pagination-controls" *ngIf="totalPages > 1">
+    <button
+      type="button"
+      class="page-btn prev-btn"
+      [disabled]="currentPage === 1"
+      (click)="prevPage()"
+      aria-label="Previous Page"
+    >
+      &larr; Prev
+    </button>
+
+    <div class="page-numbers">
+      <button
+        type="button"
+        class="page-number-btn"
+        *ngFor="let page of pageNumbers"
+        [class.active]="page === currentPage"
+        (click)="selectPage(page)"
+      >
+        {{ page }}
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="page-btn next-btn"
+      [disabled]="currentPage === totalPages"
+      (click)="nextPage()"
+      aria-label="Next Page"
+    >
+      Next &rarr;
+    </button>
+  </div>
+</div>

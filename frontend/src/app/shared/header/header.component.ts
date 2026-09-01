@@ -15,6 +15,10 @@ export class HeaderComponent {
   auth = inject(AuthService);
   private router = inject(Router);
 
+  // Default cart and favorites count (to be connected to services/API in future)
+  cartCount = 0;
+  favoritesCount = 0;
+
   logout(): void {
     this.auth.logout();
     this.router.navigate(["/"]);
