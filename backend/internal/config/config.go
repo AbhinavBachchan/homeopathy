@@ -46,10 +46,10 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		Port: getEnv("PORT", "8080"),
+		Port: getEnv("PORT", "5080"),
 		Env:  getEnv("APP_ENV", "development"),
 
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/homeopathy?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgresql://postgres:Abhi9065890801@db.fsncoziyuqtwighkxait.supabase.co:5432/postgres"),
 
 		JWTSecret: getEnv("JWT_SECRET", "change-me-in-production"),
 

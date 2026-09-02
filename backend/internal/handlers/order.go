@@ -6,7 +6,7 @@ import (
 	"homeopathy-platform/internal/models"
 	"homeopathy-platform/pkg/response"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -29,18 +29,18 @@ type createOrderRequest struct {
 // Create builds an order from the cart. GST calculation, Schedule H
 // prescription enforcement, and Razorpay/Stripe charge creation are the next
 // pieces to wire in here before this is checkout-ready.
-func (h *OrderHandler) Create(c *gin.Context) {
+func (h *OrderHandler) Create(c *fiber.Ctx) error{
 	var req createOrderRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Error(c, 400, err.Error())
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return response.Error(c, 400, err.Error())
+		
 	}
 
-	userIDStr, _ := c.Get("user_id")
+	userIDStr := c.Locals("user_id")
 	userID, err := uuid.Parse(userIDStr.(string))
 	if err != nil {
-		response.Error(c, 401, "invalid user")
-		return
+		return response.Error(c, 401, "invalid user")
+		
 	}
 
 	var subtotal int64
@@ -48,8 +48,8 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	for _, item := range req.Items {
 		var product models.Product
 		if err := h.db.First(&product, "id = ?", item.ProductID).Error; err != nil {
-			response.Error(c, 404, "product not found: "+item.ProductID.String())
-			return
+			return response.Error(c, 404, "product not found: "+item.ProductID.String())
+			
 		}
 		if product.Schedule == models.ScheduleH {
 			scheduleHPresent = true
@@ -58,8 +58,8 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 
 	if scheduleHPresent && req.PrescriptionURL == "" {
-		response.Error(c, 400, "prescription required for Schedule H medicines in cart")
-		return
+		return response.Error(c, 400, "prescription required for Schedule H medicines in cart")
+		
 	}
 
 	// GST: 12% on physical medicine products per brief section 10.1
@@ -83,30 +83,30 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 
 	if err := h.db.Create(&order).Error; err != nil {
-		response.Error(c, 500, "failed to create order")
-		return
+		return response.Error(c, 500, "failed to create order")
+		
 	}
 
-	response.Created(c, order)
+	return response.Created(c, order)
 	// TODO: kick off payment intent (Razorpay/Stripe) and return client secret
 	// / order id for the frontend to complete payment.
 }
 
-func (h *OrderHandler) Get(c *gin.Context) {
+func (h *OrderHandler) Get(c *fiber.Ctx) error{
 	var order models.Order
-	if err := h.db.First(&order, "id = ?", c.Param("id")).Error; err != nil {
-		response.Error(c, 404, "order not found")
-		return
+	if err := h.db.First(&order, "id = ?", c.Params("id")).Error; err != nil {
+		return response.Error(c, 404, "order not found")
+		
 	}
-	response.OK(c, order)
+	return response.OK(c, order)
 }
 
-func (h *OrderHandler) ListMine(c *gin.Context) {
-	userIDStr, _ := c.Get("user_id")
+func (h *OrderHandler) ListMine(c *fiber.Ctx) error{
+	userIDStr := c.Locals("user_id")
 	var orders []models.Order
 	if err := h.db.Where("user_id = ?", userIDStr).Order("created_at desc").Find(&orders).Error; err != nil {
-		response.Error(c, 500, "failed to fetch orders")
-		return
+		return response.Error(c, 500, "failed to fetch orders")
+		
 	}
-	response.OK(c, orders)
+	return response.OK(c, orders)
 }
