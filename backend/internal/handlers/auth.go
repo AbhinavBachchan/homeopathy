@@ -15,7 +15,7 @@ import (
 	"homeopathy-platform/pkg/mailer"
 	"homeopathy-platform/pkg/response"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -42,16 +42,17 @@ type registerRequest struct {
 	Phone    string `json:"phone"`
 }
 
-func (h *AuthHandler) Register(c *fiber.Ctx) error{
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req registerRequest
-	if err := c.BodyParser(&req); err != nil {
-	  return c.Status(400).JSON(fiber.Map{"error":  err.Error()})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "could not process password"})
-		
+		response.Error(c, 500, "could not process password")
+		return
 	}
 
 	user := models.User{
@@ -63,16 +64,17 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error{
 	}
 
 	if err := h.db.Create(&user).Error; err != nil {
-		return c.Status(409).JSON(fiber.Map{"error":"email already registered"})
+		response.Error(c, 409, "email already registered")
+		return
 	}
 
 	token, err := h.issueToken(user)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error":"could not issue token"})
-		
+		response.Error(c, 500, "could not issue token")
+		return
 	}
 
-	return c.Status(201).JSON(fiber.Map{"user": user, "token": token})
+	response.Created(c, gin.H{"user": user, "token": token})
 }
 
 type loginRequest struct {
@@ -80,28 +82,31 @@ type loginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (h *AuthHandler) Login(c *fiber.Ctx) error{
+func (h *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error":err.Error()})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
 	}
 
 	var user models.User
 	if err := h.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		return c.Status(401).JSON(fiber.Map{"error":"invalid credentials"})
-		
+		response.Error(c, 401, "invalid credentials")
+		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return c.Status(401).JSON(fiber.Map{"error":"invalid credentials"})
+		response.Error(c, 401, "invalid credentials")
+		return
 	}
 
 	token, err := h.issueToken(user)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error":"could not issue token"})
+		response.Error(c, 500, "could not issue token")
+		return
 	}
 
-	return c.JSON(fiber.Map{"user": user, "token": token})
+	response.OK(c, gin.H{"user": user, "token": token})
 }
 
 func (h *AuthHandler) issueToken(user models.User) (string, error) {
@@ -121,22 +126,25 @@ type forgotPasswordRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
-func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error{
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req forgotPasswordRequest
-	if err := c.BodyParser(&req); err != nil {
-		return response.Error(c, 400, err.Error())
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
 	}
 
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 
 	var user models.User
 	if err := h.db.Where("LOWER(email) = ?", email).First(&user).Error; err != nil {
-		return response.Error(c, 404, "Email is not registered")
+		response.Error(c, 404, "Email is not registered")
+		return
 	}
 
 	rawToken, err := generateResetCode()
 	if err != nil {
-		return response.Error(c, 500, "could not process password reset request")
+		response.Error(c, 500, "could not process password reset request")
+		return
 	}
 
 	hashedToken := hashResetToken(rawToken)
@@ -146,7 +154,8 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error{
 		"reset_token":            hashedToken,
 		"reset_token_expires_at": expiresAt,
 	}).Error; err != nil {
-		return response.Error(c, 500, "could not process password reset request")
+		response.Error(c, 500, "could not process password reset request")
+		return
 	}
 
 	// Dispatch email with plaintext reset code via Brevo mailer (or local log if unconfigured)
@@ -155,7 +164,7 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error{
 	}(user.Email, user.Name, rawToken)
 
 	// Note: Plaintext reset token is NEVER exposed in the API response.
-	return response.OK(c, fiber.Map{
+	response.OK(c, gin.H{
 		"message": "A 6 digit verification code has been sent to the registered email. Kindly enter the code.",
 	})
 }
@@ -166,11 +175,11 @@ type resetPasswordRequest struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
-func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error{
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req resetPasswordRequest
-	if err := c.BodyParser(&req); err != nil {
-		return response.Error(c, 400, err.Error())
-		
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, err.Error())
+		return
 	}
 
 	email := strings.ToLower(strings.TrimSpace(req.Email))
@@ -179,19 +188,19 @@ func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error{
 
 	var user models.User
 	if err := h.db.Where("LOWER(email) = ? AND reset_token = ?", email, hashedToken).First(&user).Error; err != nil {
-		return response.Error(c, 400, "invalid or expired reset code")
-		
+		response.Error(c, 400, "invalid or expired reset code")
+		return
 	}
 
 	if user.ResetTokenExpiresAt == nil || time.Now().After(*user.ResetTokenExpiresAt) {
-		return response.Error(c, 400, "reset code has expired, please request a new one")
-		
+		response.Error(c, 400, "reset code has expired, please request a new one")
+		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return response.Error(c, 500, "could not process password")
-		
+		response.Error(c, 500, "could not process password")
+		return
 	}
 
 	// Update user password and clear reset token fields
@@ -200,11 +209,11 @@ func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error{
 		"reset_token":            "",
 		"reset_token_expires_at": nil,
 	}).Error; err != nil {
-		return response.Error(c, 500, "could not update password")
-		
+		response.Error(c, 500, "could not update password")
+		return
 	}
 
-	return response.OK(c, fiber.Map{
+	response.OK(c, gin.H{
 		"message": "Password has been successfully reset. You can now login with your new password.",
 	})
 }
