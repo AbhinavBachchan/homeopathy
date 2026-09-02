@@ -27,10 +27,9 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	r := router.New(cfg, conn)
-
+	app := router.New(cfg, conn)
 	log.Printf("listening on :%s", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
+	if err := app.Listen(":" + cfg.Port); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }

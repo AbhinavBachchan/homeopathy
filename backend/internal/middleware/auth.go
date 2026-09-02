@@ -7,7 +7,7 @@ import (
 	"homeopathy-platform/internal/models"
 	"homeopathy-platform/pkg/response"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -18,13 +18,11 @@ type Claims struct {
 }
 
 // RequireAuth validates the JWT and stashes user_id/role in the gin context.
-func RequireAuth(cfg *config.Config) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		header := c.GetHeader("Authorization")
+func RequireAuth(cfg *config.Config) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		header := c.Get("Authorization")
 		if !strings.HasPrefix(header, "Bearer ") {
-			response.Error(c, 401, "missing or malformed authorization header")
-			c.Abort()
-			return
+			return response.Error(c, 401, "missing or malformed authorization header")
 		}
 		tokenStr := strings.TrimPrefix(header, "Bearer ")
 
@@ -33,35 +31,30 @@ func RequireAuth(cfg *config.Config) gin.HandlerFunc {
 			return []byte(cfg.JWTSecret), nil
 		})
 		if err != nil || !token.Valid {
-			response.Error(c, 401, "invalid or expired token")
-			c.Abort()
-			return
+			return response.Error(c, 401, "invalid or expired token")
 		}
 
-		c.Set("user_id", claims.UserID)
-		c.Set("role", claims.Role)
-		c.Next()
+		c.Locals("user_id", claims.UserID)
+		c.Locals("role", claims.Role)
+		return c.Next()
 	}
 }
 
 // RequireRole gate-keeps routes by role, e.g. doctor dashboard, admin panel,
 // corporate HR reports.
-func RequireRole(roles ...models.Role) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		roleVal, exists := c.Get("role")
-		if !exists {
-			response.Error(c, 403, "forbidden")
-			c.Abort()
-			return
+func RequireRole(roles ...models.Role) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		role, ok := c.Locals("role").(models.Role) // or string, whatever type claims.Role actually is
+		if !ok {
+			return response.Error(c, 401, "role missing from context")
 		}
-		role := roleVal.(models.Role)
+
 		for _, r := range roles {
 			if role == r {
-				c.Next()
-				return
+				return c.Next()
 			}
 		}
-		response.Error(c, 403, "forbidden: insufficient role")
-		c.Abort()
+		return response.Error(c, 403, "forbidden: insufficient role")
+
 	}
 }
