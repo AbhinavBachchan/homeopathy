@@ -45,12 +45,12 @@ type registerRequest struct {
 func (h *AuthHandler) Register(c *fiber.Ctx) error{
 	var req registerRequest
 	if err := c.BodyParser(&req); err != nil {
-	  return c.Status(400).JSON(fiber.Map{"error":  err.Error()})
+	  return response.Error(c,400,err.Error())
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "could not process password"})
+		return response.Error(c,500,"could not process password")
 		
 	}
 
@@ -63,16 +63,16 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error{
 	}
 
 	if err := h.db.Create(&user).Error; err != nil {
-		return c.Status(409).JSON(fiber.Map{"error":"email already registered"})
+		return response.Error(c,409,"email already registered")
 	}
 
 	token, err := h.issueToken(user)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error":"could not issue token"})
+		return response.Error(c,500,"could not issue token")
 		
 	}
 
-	return c.Status(201).JSON(fiber.Map{"user": user, "token": token})
+	return response.Created(c,fiber.Map{"user": user, "token": token})
 }
 
 type loginRequest struct {
@@ -83,25 +83,25 @@ type loginRequest struct {
 func (h *AuthHandler) Login(c *fiber.Ctx) error{
 	var req loginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error":err.Error()})
+		return response.Error(c,400,err.Error())
 	}
 
 	var user models.User
 	if err := h.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		return c.Status(401).JSON(fiber.Map{"error":"invalid credentials"})
+		return response.Error(c,401,"invalid credentials")
 		
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return c.Status(401).JSON(fiber.Map{"error":"invalid credentials"})
+		return response.Error(c,401,"invalid credentials")
 	}
 
 	token, err := h.issueToken(user)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error":"could not issue token"})
+		return response.Error(c,500,"could not issue token")
 	}
 
-	return c.JSON(fiber.Map{"user": user, "token": token})
+	return response.OK(c,fiber.Map{"user": user, "token": token})
 }
 
 func (h *AuthHandler) issueToken(user models.User) (string, error) {
