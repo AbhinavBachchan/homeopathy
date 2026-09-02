@@ -46,7 +46,7 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		Port: getEnv("PORT", "5080"),
+		Port: getEnv("PORT", "8080"),
 		Env:  getEnv("APP_ENV", "development"),
 
 		DatabaseURL: getEnv("DATABASE_URL", "postgresql://postgres:Abhi9065890801@db.fsncoziyuqtwighkxait.supabase.co:5432/postgres"),

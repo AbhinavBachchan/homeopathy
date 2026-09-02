@@ -40,31 +40,27 @@ func New(cfg *config.Config, db *gorm.DB) *fiber.App {
 		api.Post("/auth/forgot-password", authHandler.ForgotPassword)
 		api.Post("/auth/reset-password", authHandler.ResetPassword)
 
-	// Auth
-	api.Post("/auth/register", authHandler.Register)
-	api.Post("/auth/login", authHandler.Login)
+		// Products (public read)
+		api.Get("/products", productHandler.List)
+		api.Get("/products/:slug", productHandler.GetBySlug)
 
-	// Products (public read)
-	api.Get("/products", productHandler.List)
-	api.Get("/products/:slug", productHandler.GetBySlug)
+		// Orders (patient, authenticated)
+		authed := api.Group("")
+		authed.Use(middleware.RequireAuth(cfg))
+		authed.Post("/orders", orderHandler.Create)
+		authed.Get("/orders/:id", orderHandler.Get)
+		authed.Get("/orders", orderHandler.ListMine)
 
-	// Orders (patient, authenticated)
-	authed := api.Group("")
-	authed.Use(middleware.RequireAuth(cfg))
-	authed.Post("/orders", orderHandler.Create)
-	authed.Get("/orders/:id", orderHandler.Get)
-	authed.Get("/orders", orderHandler.ListMine)
+		// Admin (product CRUD, dashboard)
+		admin := api.Group("/admin")
+		admin.Use(middleware.RequireAuth(cfg), middleware.RequireRole(models.RoleAdmin))
+		admin.Post("/products", productHandler.Create)
+		admin.Put("/products/:id", productHandler.Update)
+		admin.Delete("/products/:id", productHandler.Delete)
 
-	// Admin (product CRUD, dashboard)
-	admin := api.Group("/admin")
-	admin.Use(middleware.RequireAuth(cfg), middleware.RequireRole(models.RoleAdmin))
-	admin.Post("/products", productHandler.Create)
-	admin.Put("/products/:id", productHandler.Update)
-	admin.Delete("/products/:id", productHandler.Delete)
-
-	// TODO next: /api/webhooks/razorpay, /api/webhooks/stripe,
-	// /api/webhooks/shiprocket, /api/webhooks/interakt (unauthenticated,
-	// signature-verified) and /api/ai/symptom-assess once Phase 2 starts.
+		// TODO next: /api/webhooks/razorpay, /api/webhooks/stripe,
+		// /api/webhooks/shiprocket, /api/webhooks/interakt (unauthenticated,
+		// signature-verified) and /api/ai/symptom-assess once Phase 2 starts.
 	}
 	return app
 }
