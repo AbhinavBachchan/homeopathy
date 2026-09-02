@@ -2,10 +2,9 @@ package handlers
 
 import (
 	"homeopathy-platform/internal/models"
-	"homeopathy-platform/pkg/response"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
+	"homeopathy-platform/pkg/response"
 )
 
 type ProductHandler struct {
@@ -20,7 +19,7 @@ func NewProductHandler(db *gorm.DB) *ProductHandler {
 // (therapeutic_category), brand (manufacturer), and free-text search.
 // Algolia can be layered in later for instant/typo-tolerant search; this is
 // the DB-backed fallback and what powers /api/products by default.
-func (h *ProductHandler) List(c *gin.Context) {
+func (h *ProductHandler) List(c *fiber.Ctx) error{
 	var products []models.Product
 	query := h.db.Where("is_active = ?", true)
 
@@ -38,61 +37,54 @@ func (h *ProductHandler) List(c *gin.Context) {
 	}
 
 	if err := query.Find(&products).Error; err != nil {
-		response.Error(c, 500, "failed to fetch products")
-		return
+		return c.Status(500).JSON(fiber.Map{"error":"failed to fetch products"})
 	}
 
-	response.OK(c, products)
+	return response.OK(c,products)
 }
 
-func (h *ProductHandler) GetBySlug(c *gin.Context) {
+func (h *ProductHandler) GetBySlug(c *fiber.Ctx) error{
 	var product models.Product
-	if err := h.db.Where("slug = ? AND is_active = ?", c.Param("slug"), true).First(&product).Error; err != nil {
-		response.Error(c, 404, "product not found")
-		return
+	if err := h.db.Where("slug = ? AND is_active = ?", c.Params("slug"), true).First(&product).Error; err != nil {
+		return response.Error(c,404,"product not found")
 	}
-	response.OK(c, product)
+	return response.OK(c,product)
 }
 
 // --- Admin CRUD (mount behind RequireRole(models.RoleAdmin)) ---
 
-func (h *ProductHandler) Create(c *gin.Context) {
+func (h *ProductHandler) Create(c *fiber.Ctx) error{
 	var product models.Product
-	if err := c.ShouldBindJSON(&product); err != nil {
-		response.Error(c, 400, err.Error())
-		return
+	if err := c.BodyParser(&product); err != nil {
+		return response.Error(c,400,err.Error())
 	}
 	if err := h.db.Create(&product).Error; err != nil {
-		response.Error(c, 500, "failed to create product")
-		return
+		return response.Error(c,500,"failed to create product")
+		
 	}
-	response.Created(c, product)
+	return response.Created(c,product)
 }
 
-func (h *ProductHandler) Update(c *gin.Context) {
+func (h *ProductHandler) Update(c *fiber.Ctx) error{
 	var product models.Product
-	if err := h.db.Where("id = ?", c.Param("id")).First(&product).Error; err != nil {
-		response.Error(c, 404, "product not found")
-		return
+	if err := h.db.Where("id = ?", c.Params("id")).First(&product).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"Error": "product not found"})
 	}
 	var updates models.Product
-	if err := c.ShouldBindJSON(&updates); err != nil {
-		response.Error(c, 400, err.Error())
-		return
+	if err := c.BodyParser(&updates); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 	if err := h.db.Model(&product).Updates(updates).Error; err != nil {
-		response.Error(c, 500, "failed to update product")
-		return
+		return c.Status(500).JSON(fiber.Map{"error": "failed to update product"})
 	}
-	response.OK(c, product)
+	return c.JSON(fiber.Map{"product": product})
 }
 
-func (h *ProductHandler) Delete(c *gin.Context) {
-	if err := h.db.Where("id = ?", c.Param("id")).Delete(&models.Product{}).Error; err != nil {
-		response.Error(c, 500, "failed to delete product")
-		return
+func (h *ProductHandler) Delete(c *fiber.Ctx) error{
+	if err := h.db.Where("id = ?", c.Params("id")).Delete(&models.Product{}).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to delete product"})
 	}
-	response.OK(c, gin.H{"deleted": true})
+	return c.JSON(fiber.Map{"deleted": true})
 }
 
 // TODO: bulk CSV import (P0 in brief) - stream-parse a CSV upload and
