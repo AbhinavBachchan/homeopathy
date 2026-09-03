@@ -19,5 +19,10 @@ func AutoMigrate(conn *gorm.DB) error {
 		&models.User{},
 		&models.Product{},
 		&models.Order{},
+		&models.Address{},
+		&models.Cart{},
+		&models.CartItem{},
+		&models.WishlistItem{},
+		&models.OrderItem{},
 	)
 }
