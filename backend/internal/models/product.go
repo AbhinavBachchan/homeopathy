@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -26,15 +27,15 @@ type Product struct {
 	SizeQuantity      string         `json:"size_quantity"`                      // 10g, 30ml, etc.
 	Manufacturer      string         `json:"manufacturer"`                       // SBL, Schwabe, Boiron...
 	TherapeuticCategory string       `json:"therapeutic_category"`
-	Indications       []string       `gorm:"type:text[]" json:"indications"`
-	Contraindications []string       `gorm:"type:text[]" json:"contraindications"`
+	Indications       pq.StringArray       `gorm:"type:text[]" json:"indications"`
+	Contraindications pq.StringArray       `gorm:"type:text[]" json:"contraindications"`
 	Schedule          Schedule       `gorm:"type:varchar(5);default:'OTC'" json:"schedule"`
 	HSNCode           string         `json:"hsn_code"`
 	SKU               string         `gorm:"uniqueIndex;not null" json:"sku"`
-	Price             int64          `gorm:"not null" json:"price"` // stored in paise/cents to avoid float issues
-	MRP               int64          `json:"mrp"`
-	StockQty          int            `gorm:"default:0" json:"stock_qty"`
-	Images            []string       `gorm:"type:text[]" json:"images"`
+	Price             int64          `gorm:"not null;check: price>=0" json:"price"` // stored in paise/cents to avoid float issues
+	MRP               int64          `gorm:"check: mrp>=0" json:"mrp"`
+	StockQty          int            `gorm:"default:0;check: stock_qty>=0" json:"stock_qty"`
+	Images            pq.StringArray       `gorm:"type:text[]" json:"images"`
 	IsActive          bool           `gorm:"default:true" json:"is_active"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
