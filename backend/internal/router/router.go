@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"homeopathy-platform/internal/config"
 	"homeopathy-platform/internal/handlers"
 	"homeopathy-platform/internal/middleware"
