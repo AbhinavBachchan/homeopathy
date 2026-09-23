@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
 	"homeopathy-platform/internal/config"
@@ -56,5 +58,41 @@ func RequireRole(roles ...models.Role) fiber.Handler {
 		}
 		return response.Error(c, 403, "forbidden: insufficient role")
 
+	}
+}
+
+func OptionalAuth(cfg *config.Config) fiber.Handler {
+
+	return func(c *fiber.Ctx) error {
+		fmt.Println("OPTIONAL AUTH HIT")
+		fmt.Println("Authorization:", c.Get("Authorization"))
+		header := c.Get("Authorization")
+
+		if header == "" {
+			return c.Next()
+		}
+
+		if !strings.HasPrefix(header, "Bearer ") {
+			return response.Error(c, 401, "missing or malformed authorization header")
+		}
+		tokenStr := strings.TrimPrefix(header, "Bearer ")
+
+		claims := &Claims{}
+		token, err := jwt.ParseWithClaims(tokenStr, claims,
+			func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, errors.New("unexpected signing method")
+				}
+
+				return []byte(cfg.JWTSecret), nil
+			},
+		)
+		if err != nil || !token.Valid {
+			return response.Error(c, 401, "invalid or expired token")
+		}
+
+		c.Locals("user_id", claims.UserID)
+		c.Locals("role", claims.Role)
+		return c.Next()
 	}
 }

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"homeopathy-platform/internal/config"
 	"homeopathy-platform/internal/handlers"
 	"homeopathy-platform/internal/middleware"
@@ -11,8 +12,8 @@ import (
 )
 
 func New(cfg *config.Config, db *gorm.DB) *fiber.App {
+	
 	app := fiber.New()
-
 	// CORS for the Angular dev server / production frontend origin.
 	app.Use(func(c *fiber.Ctx) error {
 		c.Set("Access-Control-Allow-Origin", "*") // tighten to your Angular origin in production
@@ -27,6 +28,7 @@ func New(cfg *config.Config, db *gorm.DB) *fiber.App {
 	authHandler := handlers.NewAuthHandler(db, cfg)
 	productHandler := handlers.NewProductHandler(db)
 	orderHandler := handlers.NewOrderHandler(db)
+	cartHandler := handlers.NewCartHandler(db)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -45,11 +47,21 @@ func New(cfg *config.Config, db *gorm.DB) *fiber.App {
 		api.Get("/products/:slug", productHandler.GetBySlug)
 
 		// Orders (patient, authenticated)
-		authed := api.Group("")
+		authed := api.Group("/orders")
 		authed.Use(middleware.RequireAuth(cfg))
-		authed.Post("/orders", orderHandler.Create)
-		authed.Get("/orders/:id", orderHandler.Get)
-		authed.Get("/orders", orderHandler.ListMine)
+		authed.Post("/", orderHandler.Create)
+		authed.Get("/:id", orderHandler.Get)
+		authed.Get("/", orderHandler.ListMine)
+
+		cart := api.Group("/cart")
+		cart.Use(middleware.OptionalAuth(cfg))
+
+		cart.Get("/", cartHandler.Get)
+		cart.Post("/items", cartHandler.AddItem)
+
+		// cart.Patch("/items/:productId", cartHandler.UpdateItem)
+		// cart.Delete("/items/:productId", cartHandler.RemoveItem)
+		// cart.Delete("", cartHandler.Clear)
 
 		// Admin (product CRUD, dashboard)
 		admin := api.Group("/admin")
